@@ -8,10 +8,10 @@
 
 // WiFi parameters to be configured
 const char* ssid						= "OnePlus 5";		// Check capitals!
-const char* password					= "dikkebmw";	// Check capitals!
+const char* password					= "******";	// Check capitals!
 
 // Configurable parameters.
-const char* iCalUrl						= "https://mijnrooster.sharepoint.hu.nl/ical?5cec3e73&group=false&eu=U1REXDE2OTYwNTY=&h=kJizbI1Oj6KXG3GAV9a-X2gIcxF7_EUWIW2WdwI6UYc=";
+const char* iCalUrl						= "*****";
 const unsigned int travelTimeMin		= 700;
 const int timeZone						= 2;     // Central European Time
 const char speakerPin					= D2;
