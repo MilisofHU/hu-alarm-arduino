@@ -4,22 +4,23 @@
 #include <TimeLib.h>
 #include <ArduinoJson.h>
 
-//#define DEBUG
 
 // WiFi parameters to be configured
-const char* ssid						= "OnePlus 5";		// Check capitals!
+const char* ssid						= "network";		// Check capitals!
 const char* password					= "******";	// Check capitals!
 
 // Configurable parameters.
 const char* iCalUrl						= "*****";
-const unsigned int travelTimeMin		= 700;
-const int timeZone						= 2;     // Central European Time
-const char speakerPin					= D2;
-const char ledPin						= 4;
-const unsigned int alarmRefireInterval  = 30000; // 30 seconds.
+const unsigned int travelTimeMin		= 60;
+
 
 // Do not change anything under here...
+//#define DEBUG
+const char speakerPin					= D2;
+const char ledPin						= 4;
+const int timeZone						= 2;     // Central European Time
 const unsigned int localPort			= 8888;  // local port to listen for UDP packets
+const unsigned int alarmRefireInterval  = 30000; // 30 seconds.
 const char* ntpServerName				= "us.pool.ntp.org";
 const char* apiUrl						= "http://iot-alarm.herokuapp.com/api/events";
 const constexpr time_t travelTimeSec	= travelTimeMin * 60;
