@@ -4,12 +4,12 @@
 #include <TimeLib.h>
 #include <ArduinoJson.h>
 
+// PAS DE ONDERSTAANDE CONFIGURATIE AAN.
+// =========================================
 
 // WiFi parameters to be configured
 const char* ssid						= "network";		// Check capitals!
 const char* password					= "******";	// Check capitals!
-
-// Configurable parameters.
 
 // API URL Heroku
 // FormatYour http://**your_heruko_container_name**.herokuapp.com/api/events/today
@@ -23,14 +23,16 @@ const char* iCalUrl						= "*****";
 const unsigned int travelTimeMin		= 60;
 
 
-// Do not change anything under here...
+// PAS HIERONDER NIETS AAN.
+// =================================
+
 #define DEBUG
 const char speakerPin					= D2;
 const char ledPin						= 4;
 const int timeZone						= 0;     // Central European Time
 const unsigned int localPort			= 8888;  // local port to listen for UDP packets
 const unsigned int alarmRefireInterval  = 30000; // 30 seconds.
-const char* ntpServerName				= "nl.pool.ntp.org";
+const char* ntpServerName				= "nl.pool.ntp.org"; // NTP-server
 const constexpr time_t travelTimeSec	= travelTimeMin * 60;
 
 // Declarations...
