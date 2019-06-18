@@ -4,45 +4,48 @@
 #include <TimeLib.h>
 #include <ArduinoJson.h>
 
-// Configurable parameters.
+
 // WiFi parameters to be configured
-const char* ssid						            = "network";		// Check capitals!
-const char* password					          = "******";	    // Check capitals!
-const char* iCalUrl						          = "*****";     // Change 
-const unsigned int travelTimeMin	      = 60;
+const char* ssid						= "network";		// Check capitals!
+const char* password					= "******";	// Check capitals!
+
+// Configurable parameters.
+
+// API URL Heroku
+// FormatYour http://**your_heruko_container_name**.herokuapp.com/api/events/today
+// For example: http://iot-alarm.herokuapp.com/api/events/today
+const char* apiUrl						= "http://**your_heruko_container_name**.herokuapp.com/api/events/today";
+
+// Calender URL out of mijnrooster.hu.nl
+const char* iCalUrl						= "*****";
+
+// Your personal travel time.
+const unsigned int travelTimeMin		= 60;
+
 
 // Do not change anything under here...
-//consts
-const char speakerPin					          = D2;
-const char ledPin						            = 4;
-const int timeZone						          = 2;     // Central European Time
-const unsigned int localPort			      = 8888;  // local port to listen for UDP packets
+#define DEBUG
+const char speakerPin					= D2;
+const char ledPin						= 4;
+const int timeZone						= 0;     // Central European Time
+const unsigned int localPort			= 8888;  // local port to listen for UDP packets
 const unsigned int alarmRefireInterval  = 30000; // 30 seconds.
-const char* ntpServerName				        = "us.pool.ntp.org";
-const char* apiUrl						          = "http://iot-alarm.herokuapp.com/api/events";
-const constexpr time_t travelTimeSec	  = travelTimeMin * 60;
-const int NTP_PACKET_SIZE               = 48; // NTP time is in the first 48 bytes of message
-const size_t capacity = JSON_ARRAY_SIZE(61) + 86 * JSON_OBJECT_SIZE(4); // JSON stuff
-
-//nonconsts
-bool alarmFiring                        = false;
-bool alarmState                         = false;
-unsigned int alarmTiming                = 0;
-unsigned int updateTiming               = 0;
-unsigned int alarmFireStart             = 0;
-unsigned int httpCode                   = 0;
-signed int diff                         = 0;
-uint32_t beginWait                      = 0;
-size_t closestIndex                     = 0;
-int size                                = 0;
-signed int closestTimestamp             = -1;
-
-byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
+const char* ntpServerName				= "nl.pool.ntp.org";
+const constexpr time_t travelTimeSec	= travelTimeMin * 60;
 
 // Declarations...
-unsigned long secsSince1900;
 WiFiUDP Udp;
 HTTPClient http;
+
+bool alarmFiring = false;
+bool alarmState = false;
+
+unsigned int alarmTiming = 0;
+unsigned int updateTiming = 0;
+
+unsigned int alarmFireStart = 0;
+
+
 
 // Function declarations...
 time_t getNtpTime();
@@ -50,6 +53,8 @@ void digitalClockDisplay();
 void printDigits(int digits);
 void sendNTPpacket(IPAddress &address);
 
+// JSON stuff
+const size_t capacity = JSON_ARRAY_SIZE(61) + 86 * JSON_OBJECT_SIZE(4);
 
 void setup()
 {
@@ -83,9 +88,10 @@ void loop()
 			digitalWrite(speakerPin, LOW);
 		} else {
 			alarmTiming = millis();
+			
 			alarmState = !alarmState;
 			tone(speakerPin, 1000, 500);
-      			
+			
 			Serial.println(alarmState);
 		}
 	}
@@ -98,7 +104,7 @@ void loop()
 		http.begin(apiUrl);
 		http.addHeader("calendarurl", iCalUrl);
 		
-		httpCode = http.GET();
+		unsigned int httpCode = http.GET();
 		
 		if (httpCode > 0) {
 			Serial.print("HTTP code: ");
@@ -114,17 +120,19 @@ void loop()
 				return;
 			}
 			
+			
 			JsonArray lessons = doc.as<JsonArray>();
 			
-			closestIndex = 0;
-			closestTimestamp = -1;
+			size_t closestIndex = 0;
+			signed int closestTimestamp = -1;
+			
 			time_t nowTimestamp = now();
 			
 			for (unsigned int i = 0; i < lessons.size(); i++) {
 				JsonObject lesson = lessons[i];
 				
 				if (!lesson.isNull()) {
-					diff = static_cast<unsigned int>(lesson["date"]) - nowTimestamp;
+					signed int diff = static_cast<unsigned int>(lesson["date"]) - nowTimestamp;
 					#ifdef DEBUG:
 					
 					Serial.println(static_cast<const char* >(lesson["title"]));
@@ -164,9 +172,19 @@ void loop()
 					alarmFireStart = 0;
 				}
 			}
+			
+			
 		}
+		
 		http.end();
+		
+		
 	}
+	
+	
+	
+	
+
 }
 
 void printDigits(int digits)
@@ -179,6 +197,10 @@ void printDigits(int digits)
 }
 
 /*-------- NTP code ----------*/
+
+const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
+
 time_t getNtpTime()
 {
 	IPAddress ntpServerIP; // NTP server's ip address
@@ -191,12 +213,13 @@ time_t getNtpTime()
 	Serial.print(": ");
 	Serial.println(ntpServerIP);
 	sendNTPpacket(ntpServerIP);
-	beginWait = millis();
+	uint32_t beginWait = millis();
 	while (millis() - beginWait < 1500) {
-		size = Udp.parsePacket();
+		int size = Udp.parsePacket();
 		if (size >= NTP_PACKET_SIZE) {
 			Serial.println("Receive NTP Response");
 			Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+			unsigned long secsSince1900;
 			// convert four bytes starting at location 40 to a long integer
 			secsSince1900 =  (unsigned long)packetBuffer[40] << 24;
 			secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
@@ -215,18 +238,16 @@ void sendNTPpacket(IPAddress &address)
 	// set all bytes in the buffer to 0
 	memset(packetBuffer, 0, NTP_PACKET_SIZE);
 	// Initialize values needed to form NTP request
-	
 	// (see URL above for details on the packets)
-	packetBuffer[0]   = 0b11100011;   // LI, Version, Mode
-	packetBuffer[1]   = 0;     // Stratum, or type of clock
-	packetBuffer[2]   = 6;     // Polling Interval
-	packetBuffer[3]   = 0xEC;  // Peer Clock Precision
-	
+	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+	packetBuffer[1] = 0;     // Stratum, or type of clock
+	packetBuffer[2] = 6;     // Polling Interval
+	packetBuffer[3] = 0xEC;  // Peer Clock Precision
 	// 8 bytes of zero for Root Delay & Root Dispersion
-	packetBuffer[12]  = 49;
-	packetBuffer[13]  = 0x4E;
-	packetBuffer[14]  = 49;
-	packetBuffer[15]  = 52;
+	packetBuffer[12] = 49;
+	packetBuffer[13] = 0x4E;
+	packetBuffer[14] = 49;
+	packetBuffer[15] = 52;
 	// all NTP fields have been given values, now
 	// you can send a packet requesting a timestamp:
 	Udp.beginPacket(address, 123); //NTP requests are to port 123
